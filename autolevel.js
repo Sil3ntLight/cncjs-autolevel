@@ -415,11 +415,14 @@ module.exports = class Autolevel {
     if (normal.z !== 0) {
       // find z at the point seg, on the plane defined by three points
       dz = pp.z - (normal.x * (pt_mm.x - pp.x) + normal.y * (pt_mm.y - pp.y)) / normal.z
-      cx = Math.sqrt((pt_mm.x * pt_mm.x) - (dz * dz)) //pythagorean theorem, with x&z plane rotated around corner point = (0,0,0), 
+
+
+      cx = Math.sign(pt_mm.x) * Math.sqrt((pt_mm.x * pt_mm.x) - (dz * dz)) //pythagorean theorem, with x&z plane rotated around corner point = (0,0,0), 
                                                       //  it's a triangle with hypotenuse = pt_mm.x, 
                                                       //  corner point = (0, pt_mm.z), and opposite side = dz, 
                                                       //  adjacent side = cx (aka (x - dx), dx is the amount x is to be shifted) 
-      cy = Math.sqrt((pt_mm.y * pt_mm.y) - (dz * dz))
+                                                      //  (Also, use Math.sign() to make sure negative coords stay negative after sqrt!)
+      cy = Math.sign(pt_mm.y) * Math.sqrt((pt_mm.y * pt_mm.y) - (dz * dz))
     } else {
       console.log(this.formatPt(pt_mm), 'normal.z is zero', this.formatPt(points[0]), this.formatPt(points[1]), this.formatPt(points[2]))
     }
@@ -435,13 +438,13 @@ module.exports = class Autolevel {
     console.log('apply leveling')
     try {
       let lines = this.gcode.split('\n')
-      let p0 = {
+      var p0 = { //needs to be var, not let, for lines that don't contain X or Y coords, to use the last ones (where it still is)
         x: 0,
         y: 0,
         z: 0
-      }
+      } 
       let p0_initialized = false
-      let pt = {
+      var pt = {
         x: 0,
         y: 0,
         z: 0
